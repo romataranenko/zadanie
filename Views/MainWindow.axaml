@@ -1,20 +1,38 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:zadanie.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="clr-namespace:zadanie.ViewModels"
+        mc:Ignorable="d"
+        d:DesignWidth="800" d:DesignHeight="450"
         x:Class="zadanie.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="zadanie">
-
+        Title="Zadanie Manager"
+        Width="800" Height="450">
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
+        <vm:MainWindowViewModel />
     </Design.DataContext>
-
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="10" Spacing="5">
+            <TextBox Watermark="Название задачи" Text="{Binding NewTaskTitle}" />
+            <TextBox Watermark="Описание" Text="{Binding NewTaskDescription}" />
+            <Button Content="Добавить" Command="{Binding AddTaskCommand}" HorizontalAlignment="Left" />
+        </StackPanel>
+        <DataGrid ItemsSource="{Binding Tasks}" AutoGenerateColumns="False" Margin="10">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Выполнено" Binding="{Binding IsCompleted}" />
+                <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="*" />
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="2*" />
+                <DataGridTemplateColumn Header="Действия" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Button Content="Удалить" Command="{Binding $parent[DataGrid].DataContext.DeleteTaskCommand}" CommandParameter="{Binding}" />
+                                <Button Content="Переключить" Command="{Binding $parent[DataGrid].DataContext.ToggleCompleteCommand}" CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
 </Window>

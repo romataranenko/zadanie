@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
+		<Nullable>enable</Nullable>
 		<AvaloniaUseCompiledBindings>true</AvaloniaUseCompiledBindings>
-  </PropertyGroup>
-  <ItemGroup>
+	</PropertyGroup>
+	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="11.0.10" />
 		<PackageReference Include="Avalonia.Desktop" Version="11.0.10" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.10" />
@@ -13,5 +13,5 @@
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.0.10" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-  </ItemGroup>
+	</ItemGroup>
 </Project>
