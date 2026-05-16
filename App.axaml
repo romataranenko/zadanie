@@ -4,7 +4,7 @@
     <Application.Styles>
         <FluentTheme />
 
-      
+        
         <Style Selector="TextBlock, TextBox, Button, DataGrid, Window">
             <Setter Property="FontFamily" Value="Segoe UI, Arial, Microsoft Sans Serif" />
         </Style>
