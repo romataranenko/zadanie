@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using System;
-using zadanie;
 
 namespace zadanie
 {
