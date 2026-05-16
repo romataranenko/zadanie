@@ -4,7 +4,7 @@
     <Application.Styles>
         <FluentTheme />
 
-        <!-- Принудительно задаём шрифт с поддержкой кириллицы для всех элементов -->
+      
         <Style Selector="TextBlock, TextBox, Button, DataGrid">
             <Setter Property="FontFamily" Value="Segoe UI, Arial, Microsoft Sans Serif" />
         </Style>
