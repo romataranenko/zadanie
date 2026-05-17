@@ -6,7 +6,7 @@
 
         
         <Style Selector="TextBlock, TextBox, Button, DataGrid, Window">
-            <Setter Property="FontFamily" Value="Segoe UI, Arial, Microsoft Sans Serif" />
+            <Setter Property="FontFamily" Value="Segoe UI, Arial" />
         </Style>
     </Application.Styles>
 </Application>
