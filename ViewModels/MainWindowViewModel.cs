@@ -12,12 +12,11 @@ namespace zadanie.ViewModels
     {
         private readonly DatabaseHelper _db = new DatabaseHelper();
 
-        private ObservableCollection<TaskItem> _tasks = new ObservableCollection<TaskItem>();
-        public ObservableCollection<TaskItem> Tasks
-        {
-            get => _tasks;
-            set => SetProperty(ref _tasks, value); 
-        }
+        [ObservableProperty]
+        private ObservableCollection<TaskItem> _tasks = new();
+
+        [ObservableProperty]
+        private string _newTaskTitle = string.Empty;
 
         [ObservableProperty]
         private string _newTaskDescription = string.Empty;
@@ -47,7 +46,6 @@ namespace zadanie.ViewModels
             }
         }
 
-      
         private async Task AddTaskAsync()
         {
             try
@@ -67,7 +65,7 @@ namespace zadanie.ViewModels
 
         private async Task DeleteTaskAsync(TaskItem? task)
         {
-            if (task == null) return;
+            if (task is null) return;
             try
             {
                 await _db.DeleteTaskAsync(task.Id);
@@ -81,7 +79,7 @@ namespace zadanie.ViewModels
 
         private async Task ToggleCompleteAsync(TaskItem? task)
         {
-            if (task == null) return;
+            if (task is null) return;
             try
             {
                 task.IsCompleted = !task.IsCompleted;
