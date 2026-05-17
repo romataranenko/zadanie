@@ -1,5 +1,5 @@
 ﻿using System;
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,9 +12,14 @@ namespace zadanie.ViewModels
     {
         private readonly DatabaseHelper _db = new DatabaseHelper();
 
-        [ObservableProperty] private ObservableCollection<TaskItem> _tasks = new();
-        [ObservableProperty] private string _newTaskTitle = string.Empty;
-        [ObservableProperty] private string _newTaskDescription = string.Empty;
+        [ObservableProperty]
+        private ObservableCollection<TaskItem> _tasks = new();
+
+        [ObservableProperty]
+        private string _newTaskTitle = string.Empty;
+
+        [ObservableProperty]
+        private string _newTaskDescription = string.Empty;
 
         public MainWindowViewModel()
         {
@@ -23,41 +28,67 @@ namespace zadanie.ViewModels
 
         public IAsyncRelayCommand LoadTasksCommand => new AsyncRelayCommand(LoadTasksAsync);
         public IAsyncRelayCommand AddTaskCommand => new AsyncRelayCommand(AddTaskAsync, () => !string.IsNullOrWhiteSpace(NewTaskTitle));
-        public IAsyncRelayCommand<TaskItem> DeleteTaskCommand => new AsyncRelayCommand<TaskItem>(DeleteTaskAsync);
-        public IAsyncRelayCommand<TaskItem> ToggleCompleteCommand => new AsyncRelayCommand<TaskItem>(ToggleCompleteAsync);
+        public IAsyncRelayCommand<TaskItem?> DeleteTaskCommand => new AsyncRelayCommand<TaskItem?>(DeleteTaskAsync);
+        public IAsyncRelayCommand<TaskItem?> ToggleCompleteCommand => new AsyncRelayCommand<TaskItem?>(ToggleCompleteAsync);
 
         private async Task LoadTasksAsync()
         {
-            var tasks = await _db.GetTasksAsync();
-            Tasks.Clear();
-            foreach (var t in tasks) Tasks.Add(t);
+            try
+            {
+                var tasks = await _db.GetTasksAsync();
+                Tasks.Clear();
+                foreach (var t in tasks)
+                    Tasks.Add(t);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка загрузки задач: {ex.Message}");
+            }
         }
 
         private async Task AddTaskAsync()
         {
-            var newTask = new TaskItem { Title = NewTaskTitle, Description = NewTaskDescription };
-            await _db.AddTaskAsync(newTask);
-            NewTaskTitle = "";
-            NewTaskDescription = "";
-            await LoadTasksAsync();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(NewTaskTitle)) return;
+                var newTask = new TaskItem { Title = NewTaskTitle, Description = NewTaskDescription };
+                await _db.AddTaskAsync(newTask);
+                NewTaskTitle = "";
+                NewTaskDescription = "";
+                await LoadTasksAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка добавления задачи: {ex.Message}");
+            }
         }
 
-        private async Task DeleteTaskAsync(TaskItem task)
+        private async Task DeleteTaskAsync(TaskItem? task)
         {
-            if (task != null)
+            if (task == null) return;
+            try
             {
                 await _db.DeleteTaskAsync(task.Id);
                 await LoadTasksAsync();
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка удаления: {ex.Message}");
+            }
         }
 
-        private async Task ToggleCompleteAsync(TaskItem task)
+        private async Task ToggleCompleteAsync(TaskItem? task)
         {
-            if (task != null)
+            if (task == null) return;
+            try
             {
                 task.IsCompleted = !task.IsCompleted;
                 await _db.UpdateTaskAsync(task);
                 await LoadTasksAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка изменения статуса: {ex.Message}");
             }
         }
     }

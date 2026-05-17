@@ -13,7 +13,7 @@
     </Design.DataContext>
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="10" Spacing="5">
-            <TextBox Watermark="Название задачи" Text="{Binding NewTaskTitle}" />
+           <TextBox Watermark="Название задачи" Text="{Binding NewTaskTitle}" />
             <TextBox Watermark="Описание" Text="{Binding NewTaskDescription}" />
             <Button Content="Добавить" Command="{Binding AddTaskCommand}" HorizontalAlignment="Left" />
         </StackPanel>

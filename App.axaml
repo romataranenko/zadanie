@@ -3,10 +3,5 @@
              x:Class="zadanie.App">
     <Application.Styles>
         <FluentTheme />
-
-        
-        <Style Selector="TextBlock, TextBox, Button, DataGrid, Window">
-            <Setter Property="FontFamily" Value="Segoe UI, Arial" />
-        </Style>
     </Application.Styles>
 </Application>
