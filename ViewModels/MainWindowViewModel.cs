@@ -12,11 +12,12 @@ namespace zadanie.ViewModels
     {
         private readonly DatabaseHelper _db = new DatabaseHelper();
 
-        [ObservableProperty]
-        private ObservableCollection<TaskItem> _tasks = new();
-
-        [ObservableProperty]
-        private string _newTaskTitle = string.Empty;
+        private ObservableCollection<TaskItem> _tasks = new ObservableCollection<TaskItem>();
+        public ObservableCollection<TaskItem> Tasks
+        {
+            get => _tasks;
+            set => SetProperty(ref _tasks, value); 
+        }
 
         [ObservableProperty]
         private string _newTaskDescription = string.Empty;
@@ -46,6 +47,7 @@ namespace zadanie.ViewModels
             }
         }
 
+      
         private async Task AddTaskAsync()
         {
             try
