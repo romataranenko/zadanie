@@ -1,6 +1,9 @@
-﻿namespace zadanie.Views
+﻿using Avalonia.Controls;
+
+namespace zadanie.Views
 {
-    public partial class MainWindow : Avalonia.Controls.Window
+    public partial class MainWindow : Window
     {
+        
     }
 }

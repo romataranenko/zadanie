@@ -1,60 +1,35 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using zadanie.Models;
 using zadanie.Services;
 
 namespace zadanie.ViewModels
 {
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public partial class MainWindowViewModel : ObservableObject
     {
         private readonly DatabaseHelper _db = new DatabaseHelper();
 
-        private ObservableCollection<TaskItem> _tasks = new();
+        [ObservableProperty]
+        private ObservableCollection<TaskItem> _tasks = new ObservableCollection<TaskItem>();
+
+        [ObservableProperty]
         private string _newTaskTitle = string.Empty;
+
+        [ObservableProperty]
         private string _newTaskDescription = string.Empty;
-
-        public ObservableCollection<TaskItem> Tasks
-        {
-            get => _tasks;
-            set { _tasks = value; OnPropertyChanged(); }
-        }
-
-        public string NewTaskTitle
-        {
-            get => _newTaskTitle;
-            set 
-            { 
-                _newTaskTitle = value; 
-                OnPropertyChanged();
-               
-                (AddTaskCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            }
-        }
-
-        public string NewTaskDescription
-        {
-            get => _newTaskDescription;
-            set { _newTaskDescription = value; OnPropertyChanged(); }
-        }
-
-        public ICommand LoadTasksCommand { get; }
-        public ICommand AddTaskCommand { get; }
-        public ICommand DeleteTaskCommand { get; }
-        public ICommand ToggleCompleteCommand { get; }
 
         public MainWindowViewModel()
         {
-            LoadTasksCommand = new RelayCommand(async () => await LoadTasksAsync());
-            AddTaskCommand = new RelayCommand(async () => await AddTaskAsync(), () => !string.IsNullOrWhiteSpace(NewTaskTitle));
-            DeleteTaskCommand = new RelayCommand<TaskItem>(async (task) => await DeleteTaskAsync(task));
-            ToggleCompleteCommand = new RelayCommand<TaskItem>(async (task) => await ToggleCompleteAsync(task));
-
             _ = LoadTasksAsync();
         }
+
+        public IAsyncRelayCommand LoadTasksCommand => new AsyncRelayCommand(LoadTasksAsync);
+        public IAsyncRelayCommand AddTaskCommand => new AsyncRelayCommand(AddTaskAsync, () => !string.IsNullOrWhiteSpace(NewTaskTitle));
+        public IAsyncRelayCommand<TaskItem> DeleteTaskCommand => new AsyncRelayCommand<TaskItem>(DeleteTaskAsync);
+        public IAsyncRelayCommand<TaskItem> ToggleCompleteCommand => new AsyncRelayCommand<TaskItem>(ToggleCompleteAsync);
 
         private async Task LoadTasksAsync()
         {
@@ -63,7 +38,9 @@ namespace zadanie.ViewModels
                 var tasks = await _db.GetTasksAsync();
                 Tasks.Clear();
                 foreach (var t in tasks)
+                {
                     Tasks.Add(t);
+                }
             }
             catch (Exception ex)
             {
@@ -73,34 +50,18 @@ namespace zadanie.ViewModels
 
         private async Task AddTaskAsync()
         {
+            if (string.IsNullOrWhiteSpace(NewTaskTitle)) return;
             try
             {
-                if (string.IsNullOrWhiteSpace(NewTaskTitle))
-                {
-                    Console.WriteLine("=== Заголовок пуст, добавление отменено");
-                    return;
-                }
-
-                Console.WriteLine($"=== Добавление задачи: '{NewTaskTitle}'");
-
                 var newTask = new TaskItem { Title = NewTaskTitle, Description = NewTaskDescription };
                 await _db.AddTaskAsync(newTask);
-
-                Console.WriteLine("=== Успешно добавлено в БД");
-
                 NewTaskTitle = "";
                 NewTaskDescription = "";
                 await LoadTasksAsync();
             }
             catch (Exception ex)
             {
-                
-                Console.WriteLine("\n=== ПЕРЕХВАЧЕНО ИСКЛЮЧЕНИЕ ===");
-                Console.WriteLine($"Тип: {ex.GetType().FullName}");
-                Console.WriteLine($"Сообщение: {ex.Message}");
-                if (ex.InnerException != null)
-                    Console.WriteLine($"Внутреннее исключение: {ex.InnerException.Message}");
-                Console.WriteLine("==============================\n");
+                Console.WriteLine($"Ошибка добавления: {ex.Message}");
             }
         }
 
@@ -129,49 +90,8 @@ namespace zadanie.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка изменения: {ex.Message}");
+                Console.WriteLine($"Ошибка изменения статуса: {ex.Message}");
             }
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
-    }
-    public class RelayCommand : ICommand
-    {
-        private readonly Func<Task> _execute;
-        private readonly Func<bool>? _canExecute;
-
-        public RelayCommand(Func<Task> execute, Func<bool>? canExecute = null)
-        {
-            _execute = execute;
-            _canExecute = canExecute;
-        }
-
-        public bool CanExecute(object? parameter) => _canExecute == null || _canExecute();
-        public async void Execute(object? parameter) => await _execute();
-
-        public event EventHandler? CanExecuteChanged;
-        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    public class RelayCommand<T> : ICommand
-    {
-        private readonly Func<T, Task> _execute;
-        private readonly Func<T, bool>? _canExecute;
-
-        public RelayCommand(Func<T, Task> execute, Func<T, bool>? canExecute = null)
-        {
-            _execute = execute;
-            _canExecute = canExecute;
-        }
-
-        public bool CanExecute(object? parameter) => _canExecute == null || (parameter is T t && _canExecute(t));
-        public async void Execute(object? parameter) => await _execute((T)parameter!);
-
-        public event EventHandler? CanExecuteChanged;
-        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }
