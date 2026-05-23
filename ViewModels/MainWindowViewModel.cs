@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -9,7 +10,7 @@ using zadanie.Services;
 
 namespace zadanie.ViewModels
 {
-    public partial class MainWindowViewModel : INotifyPropertyChanged
+    public class MainWindowViewModel : INotifyPropertyChanged
     {
         private readonly DatabaseHelper _db = new DatabaseHelper();
 
@@ -75,23 +76,32 @@ namespace zadanie.ViewModels
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(NewTaskTitle)) return;
+                if (string.IsNullOrWhiteSpace(NewTaskTitle))
+                {
+                    Console.WriteLine("=== Заголовок пуст, добавление отменено");
+                    return;
+                }
 
-                Console.WriteLine("=== Кнопка сработала, заголовок: " + NewTaskTitle);
+                Console.WriteLine($"=== Добавление задачи: '{NewTaskTitle}'");
 
                 var newTask = new TaskItem { Title = NewTaskTitle, Description = NewTaskDescription };
                 await _db.AddTaskAsync(newTask);
 
+                Console.WriteLine("=== Успешно добавлено в БД");
+
                 NewTaskTitle = "";
                 NewTaskDescription = "";
                 await LoadTasksAsync();
-
-                Console.WriteLine("=== Добавление успешно");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"=== ОШИБКА: {ex.Message}");
-                
+                // Подробный вывод в консоль
+                Console.WriteLine("\n=== ПЕРЕХВАЧЕНО ИСКЛЮЧЕНИЕ ===");
+                Console.WriteLine($"Тип: {ex.GetType().FullName}");
+                Console.WriteLine($"Сообщение: {ex.Message}");
+                if (ex.InnerException != null)
+                    Console.WriteLine($"Внутреннее исключение: {ex.InnerException.Message}");
+                Console.WriteLine("==============================\n");
             }
         }
 

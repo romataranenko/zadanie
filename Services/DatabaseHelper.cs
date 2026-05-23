@@ -11,7 +11,7 @@ namespace zadanie.Services
         private readonly string _connectionString;
 
         
-        public DatabaseHelper(string connectionString = "Host=localhost;Port=5432;Username=postgres;Password=root;Database=p511_db")
+         public DatabaseHelper(string connectionString = "Host=localhost;Port=5432;Database=TaskDB;Username=postgres;Password=postgres")
         {
             _connectionString = connectionString;
         }
