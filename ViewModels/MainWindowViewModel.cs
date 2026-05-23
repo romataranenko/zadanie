@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -95,7 +94,7 @@ namespace zadanie.ViewModels
             }
             catch (Exception ex)
             {
-                // Подробный вывод в консоль
+                
                 Console.WriteLine("\n=== ПЕРЕХВАЧЕНО ИСКЛЮЧЕНИЕ ===");
                 Console.WriteLine($"Тип: {ex.GetType().FullName}");
                 Console.WriteLine($"Сообщение: {ex.Message}");
