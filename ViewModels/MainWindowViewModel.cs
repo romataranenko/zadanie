@@ -6,30 +6,19 @@ using CommunityToolkit.Mvvm.Input;
 using zadanie.Models;
 using zadanie.Services;
 
-namespace zadanie.ViewModels
-{
+namespace zadanie.ViewModels;
+
     public partial class MainWindowViewModel : ObservableObject
     {
-        private readonly DatabaseHelper _db = new DatabaseHelper();
+    private readonly DatabaseHelper _db = new();
+    [ObservableProperty] private ObservableCollection<TaskItem> _tasks = [];
+    [ObservableProperty] private string _newTaskTitle = string.Empty;
+    [ObservableProperty] private string _newTaskDescription = string.Empty;
 
-        [ObservableProperty]
-        private ObservableCollection<TaskItem> _tasks = new ObservableCollection<TaskItem>();
-
-        [ObservableProperty]
-        private string _newTaskTitle = string.Empty;
-
-        [ObservableProperty]
-        private string _newTaskDescription = string.Empty;
-
-        public MainWindowViewModel()
-        {
-            _ = LoadTasksAsync();
-        }
+    public MainWindowViewModel() => _ = LoadTasksAsync();
 
         public IAsyncRelayCommand LoadTasksCommand => new AsyncRelayCommand(LoadTasksAsync);
-        public IAsyncRelayCommand AddTaskCommand => new AsyncRelayCommand(AddTaskAsync, () => !string.IsNullOrWhiteSpace(NewTaskTitle));
-        public IAsyncRelayCommand<TaskItem> DeleteTaskCommand => new AsyncRelayCommand<TaskItem>(DeleteTaskAsync);
-        public IAsyncRelayCommand<TaskItem> ToggleCompleteCommand => new AsyncRelayCommand<TaskItem>(ToggleCompleteAsync);
+    public IAsyncRelayCommand AddTaskCommand => new AsyncRelayCommand(AddTaskAsync);
 
         private async Task LoadTasksAsync()
         {
@@ -37,16 +26,10 @@ namespace zadanie.ViewModels
             {
                 var tasks = await _db.GetTasksAsync();
                 Tasks.Clear();
-                foreach (var t in tasks)
-                {
-                    Tasks.Add(t);
+            foreach (var t in tasks) Tasks.Add(t);
                 }
+        catch (Exception ex) { Console.WriteLine($"Ошибка загрузки: {ex.Message}"); }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка загрузки: {ex.Message}");
-            }
-        }
 
         private async Task AddTaskAsync()
         {
@@ -57,41 +40,13 @@ namespace zadanie.ViewModels
                 await _db.AddTaskAsync(newTask);
                 NewTaskTitle = "";
                 NewTaskDescription = "";
-                await LoadTasksAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка добавления: {ex.Message}");
-            }
-        }
 
-        private async Task DeleteTaskAsync(TaskItem task)
-        {
-            if (task == null) return;
-            try
-            {
-                await _db.DeleteTaskAsync(task.Id);
-                await LoadTasksAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка удаления: {ex.Message}");
-            }
+            // Временное сообщение об успехе (будет в консоли)
+            Console.WriteLine($"✅ Задача '{newTask.Title}' успешно добавлена!");
         }
-
-        private async Task ToggleCompleteAsync(TaskItem task)
+        catch (Exception ex)
         {
-            if (task == null) return;
-            try
-            {
-                task.IsCompleted = !task.IsCompleted;
-                await _db.UpdateTaskAsync(task);
-                await LoadTasksAsync();
+            Console.WriteLine($"❌ Ошибка: {ex.Message}");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка изменения статуса: {ex.Message}");
-            }
-        }
     }
 }

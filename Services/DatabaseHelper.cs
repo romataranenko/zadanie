@@ -15,6 +15,28 @@ namespace zadanie.Services
             _connectionString = connectionString;
         }
 
+    private async Task EnsureTableExists()
+    {
+        try
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+            string sql = @"
+                CREATE TABLE IF NOT EXISTS ""Tasks"" (
+                    ""Id"" SERIAL PRIMARY KEY,
+                    ""Title"" VARCHAR(200) NOT NULL,
+                    ""Description"" TEXT,
+                    ""IsCompleted"" BOOLEAN NOT NULL DEFAULT FALSE
+                )";
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при создании таблицы: {ex.Message}");
+        }
+    }
+
         public async Task<List<TaskItem>> GetTasksAsync()
         {
             var tasks = new List<TaskItem>();
