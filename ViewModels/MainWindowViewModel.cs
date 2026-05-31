@@ -8,45 +8,99 @@ using zadanie.Services;
 
 namespace zadanie.ViewModels;
 
-    public partial class MainWindowViewModel : ObservableObject
-    {
+public partial class MainWindowViewModel : ObservableObject
+{
     private readonly DatabaseHelper _db = new();
-    [ObservableProperty] private ObservableCollection<TaskItem> _tasks = [];
-    [ObservableProperty] private string _newTaskTitle = string.Empty;
-    [ObservableProperty] private string _newTaskDescription = string.Empty;
 
-    public MainWindowViewModel() => _ = LoadTasksAsync();
+    [ObservableProperty]
+    private ObservableCollection<TaskItem> _tasks = [];
 
-        public IAsyncRelayCommand LoadTasksCommand => new AsyncRelayCommand(LoadTasksAsync);
-    public IAsyncRelayCommand AddTaskCommand => new AsyncRelayCommand(AddTaskAsync);
-
-        private async Task LoadTasksAsync()
+    private string _newTaskTitle = string.Empty;
+    public string NewTaskTitle
+    {
+        get => _newTaskTitle;
+        set
         {
-            try
+            if (SetProperty(ref _newTaskTitle, value))
             {
-                var tasks = await _db.GetTasksAsync();
-                Tasks.Clear();
-            foreach (var t in tasks) Tasks.Add(t);
-                }
-        catch (Exception ex) { Console.WriteLine($"Ошибка загрузки: {ex.Message}"); }
+                AddTaskCommand.NotifyCanExecuteChanged();
             }
+        }
+    }
 
-        private async Task AddTaskAsync()
+    [ObservableProperty]
+    private string _newTaskDescription = string.Empty;
+
+    public MainWindowViewModel()
+    {
+        Console.WriteLine("=== ViewModel создана ===");
+        _ = LoadTasksAsync();
+    }
+
+    public IAsyncRelayCommand LoadTasksCommand => new AsyncRelayCommand(LoadTasksAsync);
+    public IAsyncRelayCommand AddTaskCommand => new AsyncRelayCommand(AddTaskAsync, () => !string.IsNullOrWhiteSpace(NewTaskTitle));
+    public IAsyncRelayCommand<TaskItem?> DeleteTaskCommand => new AsyncRelayCommand<TaskItem?>(DeleteTaskAsync);
+    public IAsyncRelayCommand<TaskItem?> ToggleCompleteCommand => new AsyncRelayCommand<TaskItem?>(ToggleCompleteAsync);
+
+    private async Task LoadTasksAsync()
+    {
+        try
         {
-            if (string.IsNullOrWhiteSpace(NewTaskTitle)) return;
-            try
-            {
-                var newTask = new TaskItem { Title = NewTaskTitle, Description = NewTaskDescription };
-                await _db.AddTaskAsync(newTask);
-                NewTaskTitle = "";
-                NewTaskDescription = "";
-
-            // Временное сообщение об успехе (будет в консоли)
-            Console.WriteLine($"✅ Задача '{newTask.Title}' успешно добавлена!");
+            var tasks = await _db.GetTasksAsync();
+            Tasks.Clear();
+            foreach (var t in tasks)
+                Tasks.Add(t);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка: {ex.Message}");
-            }
+            Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+        }
+    }
+
+    private async Task AddTaskAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewTaskTitle)) return;
+        try
+        {
+            Console.WriteLine($"Добавляем: {NewTaskTitle}");
+            var newTask = new TaskItem { Title = NewTaskTitle, Description = NewTaskDescription };
+            await _db.AddTaskAsync(newTask);
+            NewTaskTitle = "";
+            NewTaskDescription = "";
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ОШИБКА ДОБАВЛЕНИЯ: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteTaskAsync(TaskItem? task)
+    {
+        if (task is null) return;
+        try
+        {
+            await _db.DeleteTaskAsync(task.Id);
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка удаления: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleCompleteAsync(TaskItem? task)
+    {
+        if (task is null) return;
+        try
+        {
+            task.IsCompleted = !task.IsCompleted;
+            await _db.UpdateTaskAsync(task);
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка изменения статуса: {ex.Message}");
+        }
     }
 }

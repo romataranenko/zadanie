@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:zadanie.ViewModels"
         x:Class="zadanie.Views.MainWindow"
-        Title="Zadanie Manager"
+        Title="Задачник"
         Width="800" Height="450">
     <Design.DataContext>
         <vm:MainWindowViewModel />
@@ -22,12 +22,8 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <Button Content="Удалить" 
-                                        Command="{Binding $parent[DataGrid].DataContext.DeleteTaskCommand}"
-                                        CommandParameter="{Binding}" />
-                                <Button Content="Переключить" 
-                                        Command="{Binding $parent[DataGrid].DataContext.ToggleCompleteCommand}"
-                                        CommandParameter="{Binding}" />
+                                <Button Content="Удалить" Command="{Binding $parent[DataGrid].DataContext.DeleteTaskCommand}" CommandParameter="{Binding}" />
+                                <Button Content="Переключить" Command="{Binding $parent[DataGrid].DataContext.ToggleCompleteCommand}" CommandParameter="{Binding}" />
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

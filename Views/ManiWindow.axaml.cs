@@ -1,9 +1,8 @@
 ﻿using Avalonia.Controls;
 
-namespace zadanie.Views
+namespace zadanie.Views;
+
+public partial class MainWindow : Window
 {
-    public partial class MainWindow : Window
-    {
-        
-    }
+    
 }

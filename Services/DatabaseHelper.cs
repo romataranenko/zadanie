@@ -4,109 +4,85 @@ using System.Threading.Tasks;
 using Npgsql;
 using zadanie.Models;
 
-namespace zadanie.Services
-{
-    public class DatabaseHelper
-    {
-        private readonly string _connectionString;
+namespace zadanie.Services;
 
-        public DatabaseHelper(string connectionString = "Host=localhost;Port=5432;Database=Tasks;Username=postgres;Password=postgres")
-        {
-            _connectionString = connectionString;
-        }
+public class DatabaseHelper
+{
+    private readonly string _connectionString;
+    public DatabaseHelper(string connectionString = "Host=localhost;Port=5432;Database=TaskDB;Username=postgres;Password=postgres")
+    {
+        _connectionString = connectionString;
+        EnsureTableExists().Wait();
+    }
 
     private async Task EnsureTableExists()
     {
-        try
-        {
-            await using var conn = new NpgsqlConnection(_connectionString);
-            await conn.OpenAsync();
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS ""Tasks"" (
-                    ""Id"" SERIAL PRIMARY KEY,
-                    ""Title"" VARCHAR(200) NOT NULL,
-                    ""Description"" TEXT,
-                    ""IsCompleted"" BOOLEAN NOT NULL DEFAULT FALSE
-                )";
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при создании таблицы: {ex.Message}");
-        }
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        string sql = @"
+            CREATE TABLE IF NOT EXISTS tasks (
+                Id SERIAL PRIMARY KEY,
+                Title VARCHAR(200) NOT NULL,
+                Description TEXT,
+                IsCompleted BOOLEAN NOT NULL DEFAULT FALSE
+            )";
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync();
     }
 
-        public async Task<List<TaskItem>> GetTasksAsync()
+    public async Task<List<TaskItem>> GetTasksAsync()
+    {
+        var tasks = new List<TaskItem>();
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        const string sql = "SELECT Id, Title, Description, IsCompleted FROM tasks";
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
         {
-            var tasks = new List<TaskItem>();
-            using (var conn = new NpgsqlConnection(_connectionString))
+            tasks.Add(new TaskItem
             {
-                await conn.OpenAsync();
-                const string sql = "SELECT \"Id\", \"Title\", \"Description\", \"IsCompleted\" FROM \"Tasks\"";
-                using (var cmd = new NpgsqlCommand(sql, conn))
-                using (var reader = await cmd.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        tasks.Add(new TaskItem
-                        {
-                            Id = reader.GetInt32(0),
-                            Title = reader.GetString(1),
-                            Description = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                            IsCompleted = reader.GetBoolean(3)
-                        });
-                    }
-                }
-            }
-            return tasks;
+                Id = reader.GetInt32(0),
+                Title = reader.GetString(1),
+                Description = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                IsCompleted = reader.GetBoolean(3)
+            });
         }
+        return tasks;
+    }
 
-        public async Task AddTaskAsync(TaskItem task)
-        {
-            using (var conn = new NpgsqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                const string sql = "INSERT INTO \"Tasks\" (\"Title\", \"Description\", \"IsCompleted\") VALUES (@Title, @Description, @IsCompleted)";
-                using (var cmd = new NpgsqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Title", task.Title);
-                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(task.Description) ? (object)DBNull.Value : task.Description);
-                    cmd.Parameters.AddWithValue("@IsCompleted", task.IsCompleted);
-                    await cmd.ExecuteNonQueryAsync();
-                }
-            }
-        }
+    public async Task AddTaskAsync(TaskItem task)
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        const string sql = "INSERT INTO tasks (Title, Description, IsCompleted) VALUES (@Title, @Description, @IsCompleted)";
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Title", task.Title);
+        cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(task.Description) ? DBNull.Value : (object)task.Description);
+        cmd.Parameters.AddWithValue("@IsCompleted", task.IsCompleted);
+        await cmd.ExecuteNonQueryAsync();
+    }
 
-        public async Task UpdateTaskAsync(TaskItem task)
-        {
-            using (var conn = new NpgsqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                const string sql = "UPDATE \"Tasks\" SET \"Title\" = @Title, \"Description\" = @Description, \"IsCompleted\" = @IsCompleted WHERE \"Id\" = @Id";
-                using (var cmd = new NpgsqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", task.Id);
-                    cmd.Parameters.AddWithValue("@Title", task.Title);
-                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(task.Description) ? (object)DBNull.Value : task.Description);
-                    cmd.Parameters.AddWithValue("@IsCompleted", task.IsCompleted);
-                    await cmd.ExecuteNonQueryAsync();
-                }
-            }
-        }
+    public async Task UpdateTaskAsync(TaskItem task)
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        const string sql = "UPDATE tasks SET Title = @Title, Description = @Description, IsCompleted = @IsCompleted WHERE Id = @Id";
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Id", task.Id);
+        cmd.Parameters.AddWithValue("@Title", task.Title);
+        cmd.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(task.Description) ? DBNull.Value : (object)task.Description);
+        cmd.Parameters.AddWithValue("@IsCompleted", task.IsCompleted);
+        await cmd.ExecuteNonQueryAsync();
+    }
 
-        public async Task DeleteTaskAsync(int id)
-        {
-            using (var conn = new NpgsqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                const string sql = "DELETE FROM \"Tasks\" WHERE \"Id\" = @Id";
-                using (var cmd = new NpgsqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    await cmd.ExecuteNonQueryAsync();
-                }
-            }
-        }
+    public async Task DeleteTaskAsync(int id)
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        const string sql = "DELETE FROM tasks WHERE Id = @Id";
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Id", id);
+        await cmd.ExecuteNonQueryAsync();
     }
 }
